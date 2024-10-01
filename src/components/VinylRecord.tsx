@@ -12,11 +12,41 @@ const preview_length = 7.5;
 const VinylRecord = (props: { song: Song }) => {
   const [isRotating, toggleRotation] = useState<boolean>(false);
 
-  useEffect(() => {}, [isRotating]);
+  useEffect(() => {
+    const audio = document.getElementById(props.song.name) as
+      | HTMLAudioElement
+      | undefined;
+    if (!audio) return;
+
+    if (!isRotating) {
+      audio.pause();
+      audio.currentTime = 0;
+      return;
+    }
+
+    audio.play();
+
+    const playbackLoop = setInterval(() => {
+      console.log(audio.currentTime);
+      audio.volume = Math.min(
+        audio.currentTime,
+        1,
+        Math.max(preview_length - audio.currentTime, 0)
+      );
+
+      if (audio.currentTime >= preview_length + 0.5) {
+        toggleRotation(false);
+      }
+    });
+
+    return () => clearInterval(playbackLoop);
+  }, [isRotating, props.song.name]);
 
   return (
     <div
       style={{
+        maxWidth: "calc(100vw - 20px)",
+        maxHeight: "calc(100vw - 20px)",
         width: vinyl_width,
         height: vinyl_width,
         position: "relative",
@@ -28,46 +58,16 @@ const VinylRecord = (props: { song: Song }) => {
         cursor: "pointer",
       }}
       onClick={() => {
-        toggleRotation((currentRotation) => {
-          const audio = document.getElementById(props.song.name) as
-            | HTMLAudioElement
-            | undefined;
-          if (!audio) return !currentRotation;
-
-          if (currentRotation) {
-            audio.pause();
-            audio.currentTime = 0;
-          } else {
-            audio.volume = 0;
-            audio.play();
-
-            const playbackLoop = setInterval(() => {
-              audio.volume = Math.min(
-                audio.currentTime,
-                1,
-                Math.max(preview_length - audio.currentTime, 0)
-              );
-
-              if (audio.currentTime >= preview_length + 0.5) {
-                toggleRotation(false);
-                audio.pause();
-                audio.currentTime = 0;
-                clearInterval(playbackLoop);
-              }
-            });
-          }
-
-          return !currentRotation;
-        });
+        toggleRotation((isCurrentlyRotating) => !isCurrentlyRotating);
       }}
     >
-      <audio id={props.song.name}>
+      <audio id={props.song.name} preload="auto">
         <source src={props.song.previewUrl} type="audio/mp3" />
       </audio>
       <div
         style={{
-          width: vinyl_width,
-          height: vinyl_width,
+          width: "100%",
+          height: "100%",
           borderRadius: "100%",
           animation: "spin 2s linear infinite",
           animationPlayState: isRotating ? "running" : "paused",
@@ -79,6 +79,10 @@ const VinylRecord = (props: { song: Song }) => {
           width={vinyl_width}
           height={vinyl_width}
           alt="Vinyl Record"
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
         />
         <img
           src={props.song.imageUrl}
@@ -87,8 +91,10 @@ const VinylRecord = (props: { song: Song }) => {
           alt="Album Cover"
           style={{
             position: "relative",
-            top: -vinyl_width / 2 - cover_width / 2 - 4,
+            top: `${-50 - (52 * cover_width) / vinyl_width}%`,
             borderRadius: "100%",
+            width: `${(100 * cover_width) / vinyl_width}%`,
+            height: `${(100 * cover_width) / vinyl_width}%`,
           }}
         />
       </div>
