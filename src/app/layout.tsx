@@ -1,10 +1,4 @@
-import type { Metadata } from "next";
-import Head from "next/head";
 import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "Vibalry",
-};
 
 export default function RootLayout({
   children,
@@ -13,16 +7,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Head>
+      <head>
+        <title>Vibalry</title>
+        <link rel="icon" type="image/x-icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta
           name="viewport"
           content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="theme-color" content="#000000" />
-      </Head>
+        <link rel="manifest" href="manifest.json" />
+      </head>
       <body>{children}</body>
     </html>
   );

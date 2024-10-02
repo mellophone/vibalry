@@ -1,9 +1,27 @@
+"use client";
 import { redirect } from "next/navigation";
 import VinylRecord from "../../components/VinylRecord";
 import { Song, songBook } from "../../mock-data";
+import { useEffect, useState } from "react";
 /* eslint-disable @next/next/no-img-element */
 
 const SongPreview = ({ params }: { params: { songTitle: string } }) => {
+  const [context, setContext] = useState<AudioContext | undefined>();
+
+  useEffect(() => {
+    if (context) {
+      return;
+    }
+
+    const audioContext = new AudioContext();
+    const closeAudioContext = () => {
+      audioContext.close();
+      window.removeEventListener("popstate", closeAudioContext);
+    };
+    window.addEventListener("popstate", closeAudioContext);
+    setContext(audioContext);
+  }, [context]);
+
   const song = songBook[params.songTitle as keyof typeof songBook] as
     | Song
     | undefined;
@@ -25,6 +43,8 @@ const SongPreview = ({ params }: { params: { songTitle: string } }) => {
       }}
     >
       <title>{`${song.name} - Vibalry`}</title>
+      <meta name="apple-mobile-web-app-status-bar-style" content={song.color} />
+      <meta name="theme-color" content={song.color} />
       <div
         style={{
           display: "grid",
@@ -33,7 +53,7 @@ const SongPreview = ({ params }: { params: { songTitle: string } }) => {
           textAlign: "center",
         }}
       >
-        <VinylRecord song={song} />
+        <VinylRecord song={song} context={context} />
         <div
           style={{
             display: "grid",

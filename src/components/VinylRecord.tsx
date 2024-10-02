@@ -9,38 +9,67 @@ const cover_width = 230;
 
 const preview_length = 7.5;
 
-const VinylRecord = (props: { song: Song }) => {
+const VinylRecord = (props: {
+  song: Song;
+  context: AudioContext | undefined;
+}) => {
   const [isRotating, toggleRotation] = useState<boolean>(false);
+  const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | undefined>();
+  const [source, setSource] = useState<AudioBufferSourceNode | undefined>();
 
   useEffect(() => {
-    const audio = document.getElementById(props.song.name) as
-      | HTMLAudioElement
-      | undefined;
-    if (!audio) return;
+    const audioContext = props.context;
 
-    if (!isRotating) {
-      audio.pause();
-      audio.currentTime = 0;
+    if (!audioContext) {
       return;
     }
 
-    audio.play();
+    (async () => {
+      const response = await fetch(props.song.previewUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      setAudioBuffer(audioBuffer);
+    })();
+  }, [props.context, props.song.previewUrl]);
 
-    const playbackLoop = setInterval(() => {
-      console.log(audio.currentTime);
-      audio.volume = Math.min(
-        audio.currentTime,
-        1,
-        Math.max(preview_length - audio.currentTime, 0)
-      );
+  useEffect(() => {
+    const audioContext = props.context;
 
-      if (audio.currentTime >= preview_length + 0.5) {
-        toggleRotation(false);
+    if (!audioContext || !audioBuffer || !isRotating) {
+      return;
+    }
+
+    const newSource = audioContext.createBufferSource();
+    newSource.buffer = audioBuffer;
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueCurveAtTime([0, 1], audioContext.currentTime, 1);
+    gainNode.gain.setValueCurveAtTime(
+      [1, 0],
+      audioContext.currentTime + preview_length - 1,
+      1
+    );
+
+    newSource.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    newSource.start();
+    newSource.stop(audioContext.currentTime + preview_length + 0.5);
+
+    newSource.onended = () => {
+      toggleRotation(false);
+    };
+    setSource(newSource);
+  }, [audioBuffer, isRotating, props.context]);
+
+  useEffect(() => {
+    if (!isRotating) {
+      if (source) {
+        source.stop();
+        setSource(undefined);
       }
-    });
-
-    return () => clearInterval(playbackLoop);
-  }, [isRotating, props.song.name]);
+      return;
+    }
+  }, [isRotating, source]);
 
   return (
     <div
@@ -58,12 +87,9 @@ const VinylRecord = (props: { song: Song }) => {
         cursor: "pointer",
       }}
       onClick={() => {
-        toggleRotation((isCurrentlyRotating) => !isCurrentlyRotating);
+        toggleRotation(!isRotating);
       }}
     >
-      <audio id={props.song.name} preload="auto">
-        <source src={props.song.previewUrl} type="audio/mp3" />
-      </audio>
       <div
         style={{
           width: "100%",

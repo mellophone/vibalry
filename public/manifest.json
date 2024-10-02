@@ -1,0 +1,12 @@
+{
+  "name": "Vibalry",
+  "short_name": "Vibalry",
+  "lang": "en-US",
+  "start_url": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "./logo.png"
+    }
+  ]
+}
