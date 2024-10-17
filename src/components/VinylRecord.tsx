@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import vinylImage from "../assets/vinyl.png";
 import { Song } from "../mock-data";
 /* eslint-disable @next/next/no-img-element */
@@ -16,6 +16,31 @@ const VinylRecord = (props: {
   const [isRotating, toggleRotation] = useState<boolean>(false);
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | undefined>();
   const [source, setSource] = useState<AudioBufferSourceNode | undefined>();
+
+  const [isVinylImageLoaded, setIsVinylImageLoaded] = useState<boolean>(false);
+  const [isCoverImageLoaded, setIsCoverImageLoaded] = useState<boolean>(false);
+  const areAllImagesLoaded = isVinylImageLoaded && isCoverImageLoaded;
+
+  const vinylImageRef = useRef<HTMLImageElement>(null);
+  const coverImageRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!vinylImageRef.current || !coverImageRef.current) {
+      return;
+    }
+
+    if (vinylImageRef.current.complete) {
+      setIsVinylImageLoaded(true);
+    } else {
+      vinylImageRef.current.onload = () => setIsVinylImageLoaded(true);
+    }
+
+    if (coverImageRef.current.complete) {
+      setIsCoverImageLoaded(true);
+    } else {
+      coverImageRef.current.onload = () => setIsCoverImageLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     const audioContext = props.context;
@@ -85,6 +110,7 @@ const VinylRecord = (props: {
         borderRadius: "100%",
         boxShadow: "0px 5px 20px rgba(0, 0, 0, .8)",
         cursor: "pointer",
+        opacity: areAllImagesLoaded ? 1 : 0,
       }}
       onClick={() => {
         toggleRotation(!isRotating);
@@ -98,9 +124,12 @@ const VinylRecord = (props: {
           animation: "spin 2s linear infinite",
           animationPlayState: isRotating ? "running" : "paused",
           userSelect: "none",
+          pointerEvents: "none",
+          border: "1px solid black",
         }}
       >
         <img
+          ref={vinylImageRef}
           src={vinylImage.src}
           width={vinyl_width}
           height={vinyl_width}
@@ -108,9 +137,12 @@ const VinylRecord = (props: {
           style={{
             width: "100%",
             height: "100%",
+            userSelect: "none",
+            pointerEvents: "none",
           }}
         />
         <img
+          ref={coverImageRef}
           src={props.song.imageUrl}
           width={cover_width}
           height={cover_width}
@@ -121,6 +153,8 @@ const VinylRecord = (props: {
             borderRadius: "100%",
             width: `${(100 * cover_width) / vinyl_width}%`,
             height: `${(100 * cover_width) / vinyl_width}%`,
+            userSelect: "none",
+            pointerEvents: "none",
           }}
         />
       </div>
