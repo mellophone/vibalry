@@ -53,7 +53,7 @@ const SongPreview = ({ params }: { params: { songTitle: string } }) => {
           textAlign: "center",
         }}
       >
-        <VinylRecord song={song} context={context} />
+        <VinylRecord song={song} />
         <div
           style={{
             display: "grid",

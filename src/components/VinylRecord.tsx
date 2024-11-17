@@ -11,11 +11,13 @@ const preview_length = 7.5;
 
 const VinylRecord = (props: {
   song: Song;
-  context: AudioContext | undefined;
+  width?: number;
+  maxWidth?: number;
 }) => {
   const [isRotating, toggleRotation] = useState<boolean>(false);
-  const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | undefined>();
-  const [source, setSource] = useState<AudioBufferSourceNode | undefined>();
+  const [audioBuffer, setAudioBuffer] = useState<AudioBuffer>();
+  const [audioContext, setAudioContext] = useState<AudioContext>();
+  const [source, setSource] = useState<AudioBufferSourceNode>();
 
   const [isVinylImageLoaded, setIsVinylImageLoaded] = useState<boolean>(false);
   const [isCoverImageLoaded, setIsCoverImageLoaded] = useState<boolean>(false);
@@ -43,24 +45,19 @@ const VinylRecord = (props: {
   }, []);
 
   useEffect(() => {
-    const audioContext = props.context;
-
-    if (!audioContext) {
-      return;
-    }
+    const newAudioContext = new AudioContext();
+    setAudioContext(newAudioContext);
 
     (async () => {
       const response = await fetch(props.song.previewUrl);
       const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      const audioBuffer = await newAudioContext.decodeAudioData(arrayBuffer);
       setAudioBuffer(audioBuffer);
     })();
-  }, [props.context, props.song.previewUrl]);
+  }, [props.song.previewUrl]);
 
   useEffect(() => {
-    const audioContext = props.context;
-
-    if (!audioContext || !audioBuffer || !isRotating) {
+    if (!audioBuffer || !isRotating || !audioContext) {
       return;
     }
 
@@ -84,7 +81,7 @@ const VinylRecord = (props: {
       toggleRotation(false);
     };
     setSource(newSource);
-  }, [audioBuffer, isRotating, props.context]);
+  }, [audioBuffer, audioContext, isRotating]);
 
   useEffect(() => {
     if (!isRotating) {
@@ -99,10 +96,10 @@ const VinylRecord = (props: {
   return (
     <div
       style={{
-        maxWidth: "calc(100vw - 20px)",
-        maxHeight: "calc(100vw - 20px)",
-        width: vinyl_width,
-        height: vinyl_width,
+        maxWidth: props.maxWidth || "calc(100vw - 20px)",
+        maxHeight: props.maxWidth || "calc(100vw - 20px)",
+        width: props.width || vinyl_width,
+        height: props.width || vinyl_width,
         position: "relative",
         textAlign: "center",
         top: 0,

@@ -13,7 +13,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo.png" />
         <meta
           name="viewport"
-          content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover"
+          content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover, user-scalable=no"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
